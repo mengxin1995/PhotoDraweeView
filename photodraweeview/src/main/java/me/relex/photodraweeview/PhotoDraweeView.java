@@ -167,11 +167,20 @@ public class PhotoDraweeView extends SimpleDraweeView implements IAttacher {
         mEnableDraweeMatrix = enableDraweeMatrix;
     }
 
+    public interface CallBack{
+        void onSuccess();
+        void onFailure();
+    }
+
     public void setPhotoUri(Uri uri) {
         setPhotoUri(uri, null);
     }
 
-    public void setPhotoUri(Uri uri, @Nullable Context context) {
+    public void setPhotoUri(Uri uri, Context context){
+        setPhotoUri(uri, context, null);
+    }
+
+    public void setPhotoUri(Uri uri, @Nullable Context context, final CallBack callBack) {
         mEnableDraweeMatrix = false;
         DraweeController controller = Fresco.newDraweeControllerBuilder()
                 .setCallerContext(context)
@@ -181,6 +190,9 @@ public class PhotoDraweeView extends SimpleDraweeView implements IAttacher {
                     @Override public void onFailure(String id, Throwable throwable) {
                         super.onFailure(id, throwable);
                         mEnableDraweeMatrix = false;
+                        if(callBack != null){
+                            callBack.onFailure();
+                        }
                     }
 
                     @Override public void onFinalImageSet(String id, ImageInfo imageInfo,
@@ -190,12 +202,18 @@ public class PhotoDraweeView extends SimpleDraweeView implements IAttacher {
                         if (imageInfo != null) {
                             update(imageInfo.getWidth(), imageInfo.getHeight());
                         }
+                        if(callBack != null) {
+                            callBack.onSuccess();
+                        }
                     }
 
                     @Override
                     public void onIntermediateImageFailed(String id, Throwable throwable) {
                         super.onIntermediateImageFailed(id, throwable);
                         mEnableDraweeMatrix = false;
+                        if(callBack != null){
+                            callBack.onFailure();
+                        }
                     }
 
                     @Override public void onIntermediateImageSet(String id, ImageInfo imageInfo) {
@@ -203,6 +221,9 @@ public class PhotoDraweeView extends SimpleDraweeView implements IAttacher {
                         mEnableDraweeMatrix = true;
                         if (imageInfo != null) {
                             update(imageInfo.getWidth(), imageInfo.getHeight());
+                        }
+                        if(callBack != null) {
+                            callBack.onSuccess();
                         }
                     }
                 })
